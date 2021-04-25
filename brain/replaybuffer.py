@@ -3,7 +3,7 @@
 @author: MRL Liu
 @time: 2021/4/20 17:08
 @env: Python,Numpy
-@desc: 经验回访池
+@desc: 经验回放池
 @ref:
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''

@@ -36,11 +36,11 @@ class Q_Learning(object):
         return action
 
     "更新函数，值迭代"
-    def update(self, s, a, r, s_):
+    def update(self, s, a, r, s_,done):
         # 获取Q预测
         q_predict = self.q_table.get_q_value(s, a)
         # 计算Q目标
-        if s_ != 'terminal':
+        if done != True:
             actions = self.q_table.get_actions(s_)
             q_target = r + self.gamma * actions.max()
         else:

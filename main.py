@@ -7,7 +7,10 @@
 @ref:
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''
-from env.Line_Env import Line_Env
+import time
+from datetime import  timedelta
+
+from env.line_env import Line_Env
 #from env.Maze_Env import Maze_Env
 from env.maze_env import Maze_Env
 from brain.brain import Brain
@@ -21,6 +24,7 @@ def run_line():
     trainer = Trainer(env, agent)  # 创建训练器
     # 训练agent模型
     trainer.train_q_learning(max_episodes=10)
+    #trainer.train_sarsa(max_episodes=10)
     # 绘制检测数据
     trainer.draw_plot()
 
@@ -32,13 +36,17 @@ def run_maze():
     #trainer = Maze_Trainer_Sarsa(env, agent)
     # 训练agent模型
     # env.after(100, trainer.train(max_episodes=10))  # 在窗口主循环中添加方法
-    #trainer.train_q_learning(max_episodes=15)
-    trainer.train_dqn(max_episodes=15)
+    start_time = time.time()# 记录时间
+    trainer.train_q_learning(max_episodes=15)
+    #trainer.train_dqn(max_episodes=15)
+    end_time = time.time()
+    time_dif = end_time - start_time
+    print("本次训练总共花费的Time: " + str(timedelta(seconds=int(round(time_dif)))))
     # 绘制检测数据
     trainer.draw_plot()
     env.mainloop()  # 调用主循环显示窗口
 
 
 if __name__ == '__main__':
-    run_maze()
-    #run_line()
+    run_line()
+    #run_maze()

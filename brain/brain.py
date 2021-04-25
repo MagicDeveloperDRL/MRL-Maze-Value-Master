@@ -22,8 +22,8 @@ class Brain(object):
 
 
     def choose_action(self, state):
-        #print(state)
         action = self.agent.choose_action(state)
+        #print(action)
         return action
 
 

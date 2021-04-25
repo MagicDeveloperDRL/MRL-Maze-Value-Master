@@ -34,11 +34,11 @@ class Sarsa(object):
             action = np.random.choice(state_actions[state_actions == np.max(state_actions)].index)
         return action
     "学习函数，值迭代"
-    def update(self, s, a, r, s_,a_):
+    def update(self, s, a, r, s_,a_,done):
         # 获取Q预测
         q_predict = self.q_table.get_q_value(s, a)
         # 计算Q目标
-        if s_ != 'terminal':
+        if done != True:
             next_q_predict = self.q_table.get_q_value(s_,a_)
             q_target = r + self.gamma * next_q_predict
         else:

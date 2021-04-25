@@ -69,16 +69,16 @@ class Dueling_DQN(object):
         self.memory.store_transition(s, a, r, s_)
 
     # 更新数据
-    def update(self, state, action, reward, state_):
+    def update(self, state, action, reward, state_,done):
         self.store_in_memory(state, action, reward, state_)  # 存储到经验池
         # 检查是否需要学习
         if self.memory.pointer > self.batch_size:  # 经验池中数据足够时开始学习
-            self.learn()
+            self.learn(done)
         elif self.memory.pointer % 10 == 0:  # 指定目录下打印消息
             print("已经收集{}条数据".format(self.memory.pointer))
             self.memory.save_memory_json()  # 保存数据
 
-    def learn(self):
+    def learn(self,done):
         if self.learn_step_counter % self.replace_target_iter == 0:
             self.sess.run(self.replace_target_op)
             print('\ntarget_net的参数被更新\n')
@@ -98,7 +98,10 @@ class Dueling_DQN(object):
         #print("eval_act_index:", eval_act_index.shape)
         reward = batch_memory[:, self.n_features + 1]
         # 更新每个序号的目标值
-        q_target[batch_index, action] = reward + self.gamma * np.max(q_next, axis=1)
+        if done is not True:
+            q_target[batch_index, action] = reward + self.gamma * np.max(q_next, axis=1)
+        else:
+            q_target[batch_index, action] = reward
         # 更新评估网络并获取其训练操作
         if self.learn_step_counter % 10 == 0:# 定期保存cnpk模型
             self.saver.save(self.sess, os.path.join(self.model_save_path, self.model_name),global_step=self.learn_step_counter)

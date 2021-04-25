@@ -23,7 +23,9 @@ class Line_Env(tk.Tk,object):
     def __init__(self):
         super(Line_Env, self).__init__()  # 继承自tk.TK
         # 初始化动作空间
-        self.actions = ['left', 'right'] # 动作空间
+        self.action_space = [0,1]  # 动作空间'left', 'right']
+        self.n_actions = len(self.action_space)
+        self.n_features = 2
         # 初始化迷宫配置
         self._init_line()
 
@@ -60,8 +62,8 @@ class Line_Env(tk.Tk,object):
         time.sleep(0.5)
         self.canvas.delete(self.rect)  # 删除Agent
         self.rect = self._create_rectangle(self.origin, 'red')
-        s = self.canvas.coords(self.rect)  # 获取agent的左上角坐标和右下角坐标
-        # print(s)
+        #s = self.canvas.coords(self.rect)  # 获取agent的左上角坐标和右下角坐标
+        s = (np.array(self.canvas.coords(self.rect)[:2]) - np.array(self.canvas.coords(self.oval)[:2])) / (MAZE_H * UNIT)
         return s
 
 
@@ -83,10 +85,11 @@ class Line_Env(tk.Tk,object):
         if s_ == self.canvas.coords(self.oval):
             reward = 1
             done = True
-            s_ = 'terminal'
         else:
             reward = 0
             done = False
+        s_ = (np.array(s_[:2]) - np.array(self.canvas.coords(self.oval)[:2])) / (MAZE_H * UNIT)
+        #print(s_)
         return s_, reward, done
 
 

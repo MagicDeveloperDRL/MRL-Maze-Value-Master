@@ -7,6 +7,8 @@
 @ref:
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''
+import time
+from datetime import timedelta
 
 from matplotlib import pyplot as plt
 plt.rcParams['font.sans-serif']=['SimHei'] #使用中文字符
@@ -34,11 +36,11 @@ class Trainer(object):
             while True:
                 self.env.render()
                 # 获取动作和环境反馈
-                action = self.agent.choose_action(str(observation))# agent根据当前状态采取动作
+                action = self.agent.choose_action(observation)# agent根据当前状态采取动作
                 observation_, reward, done = self.env.step(observation,action)# env根据动作做出反馈
                 # 学习本回合的经验(s, a, r, s)
                 #reward-=step_counter*0.01
-                self.agent.update(str(observation), action, reward, str(observation_))
+                self.agent.update(observation, action, reward, observation_,done)
                 # 更新
                 observation = observation_
                 step_counter += 1
@@ -59,16 +61,16 @@ class Trainer(object):
             reward_episode = 0
             # 获取初始环境状态
             observation = self.env.reset()
-            action = self.agent.choose_action(str(observation))  # agent根据当前状态采取动作
+            action = self.agent.choose_action(observation)  # agent根据当前状态采取动作
             # 开始本回合的仿真
             while True:
                 self.env.render()
                 # 获取动作和环境反馈
                 observation_, reward, done = self.env.step(observation,action)# env根据动作做出反馈
-                action_ = self.agent.choose_action(str(observation_))  # agent根据当前状态采取动作
+                action_ = self.agent.choose_action(observation_)  # agent根据当前状态采取动作
                 # 学习本回合的经验(s, a, r, s)
                 #reward-=step_counter*0.01
-                self.agent.update(str(observation), action, reward, str(observation_),action_)
+                self.agent.update(observation, action, reward, observation_,action_,done)
                 # 更新
                 observation = observation_
                 action = action_
@@ -83,6 +85,7 @@ class Trainer(object):
         print('仿真训练任务结束')
 
     def train_dqn(self,max_episodes):
+        # 记录开始训练的时刻
         print('仿真训练任务启动...')
         # 训练主循环
         for episode in range(1,max_episodes+1):
@@ -95,10 +98,10 @@ class Trainer(object):
                 self.env.render()
                 # 获取动作和环境反馈
                 action = self.agent.choose_action(observation)# agent根据当前状态采取动作
-                observation_, reward, done = self.env.step(action)# env根据动作做出反馈
+                observation_, reward, done = self.env.step(observation,action)# env根据动作做出反馈
                 # 更新学习
                 #reward-=step_counter*0.01
-                self.agent.update(observation, action, reward,observation_)
+                self.agent.update(observation, action, reward,observation_,done)
                 # 更新
                 observation = observation_
                 step_counter += 1

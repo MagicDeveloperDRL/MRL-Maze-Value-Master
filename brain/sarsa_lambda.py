@@ -33,16 +33,19 @@ class Sarsa_Lambda(object):
         # 有epsilon的概率贪心选取回报值最多的动作时
         else:
             state_actions = self.q_table.get_actions(state)  # 获取当前状态可采取的动作及其价值
+            self.eligibility_trace.check_state_exist(state)
             action = np.random.choice(state_actions[state_actions == np.max(state_actions)].index)
         return action
 
     "学习函数，值迭代"
-    def update(self, s, a, r, s_,a_):
+    def update(self, s, a, r, s_,a_,done):
         # 获取Q预测
         q_predict = self.q_table.get_q_value(s, a)
+        self.eligibility_trace.check_state_exist(s)
         # 计算Q目标
-        if s_ != 'terminal':
+        if done != True:
             next_q_predict = self.q_table.get_q_value(s_, a_)
+            self.eligibility_trace.check_state_exist(s_)
             q_target = r + self.gamma * next_q_predict
         else:
             q_target = r
@@ -53,8 +56,8 @@ class Sarsa_Lambda(object):
         self.eligibility_trace.update_q_value(s,a,1)
 
         # 更新Q表
-        self.q_table += self.learning_rate * (q_target - q_predict) * self.eligibility_trace
+        self.q_table.q_table += self.learning_rate * (q_target - q_predict) * self.eligibility_trace.q_table
         # self.q_table.loc[s, a] += self.learning_rate * (q_target - q_predict)
         # decay eligibility trace after update
-        self.eligibility_trace *= self.gamma * self.lambda_
+        self.eligibility_trace.q_table *= self.gamma * self.lambda_
 

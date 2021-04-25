@@ -22,27 +22,32 @@ class Q_Table(object):
         )
         #print(self.q_table)    # show table
 
-    def get_actions(self,state):
+    def get_actions(self,_state):
         """获取某个状态的所有动作"""
+        state = str(_state)  # 确保为字符串，防止出错
         self.check_state_exist(state)# 检查是否需要添加该状态
         state_actions = self.q_table.loc[state, :]  # 获取当前状态可采取的动作及其价值
         return state_actions
 
-    def get_q_value(self,state,action):
+    def get_q_value(self,_state,action):
         """获取某个状态-动作的Q值"""
+        state = str(_state)  # 确保为字符串，防止出错
         self.check_state_exist(state)  # 检查是否需要添加该状态
         get_q_value = self.q_table.loc[state, action] # 获取Q表中对应的（s,a）的值
         return get_q_value
-    def update_q_value(self,state,action,value):
+    def update_q_value(self,_state,action,value):
         """更新某个状态-动作的Q值"""
+        state = str(_state)  # 确保为字符串，防止出错
         self.check_state_exist(state)  # 检查是否需要添加该状态
         self.q_table.loc[state, action]=value # 获取Q表中对应的（s,a）的值
-    def clear_s_q_value(self,state):
+    def clear_s_q_value(self,_state):
         """清空某个状态的所有动作的Q值"""
+        state=str(_state)# 确保为字符串，防止出错
         self.check_state_exist(state)  # 检查是否需要添加该状态
         self.q_table.loc[state, :]*=0 # 获取Q表中对应的（s,a）的值
-    def check_state_exist(self, state):
+    def check_state_exist(self, _state):
         """检查状态是否存在"""
+        state = str(_state)  # 确保为字符串，防止出错
         if state not in self.q_table.index:
             # append new state to q table
             self.q_table = self.q_table.append(

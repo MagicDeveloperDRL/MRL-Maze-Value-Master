@@ -68,7 +68,7 @@ class DQN(object):
             action = np.random.randint(0, self.n_actions)
         return action
 
-    def learn(self):
+    def learn(self,done):
         # 检查是否复制参数给target_net
         if self.learn_step_counter % self.replace_target_iter == 0:
             self.sess.run(self.replace_target_op)
@@ -89,7 +89,10 @@ class DQN(object):
         reward = batch_memory[:, self.n_features + 1]
 
         # 计算Q现实值，只修改矩阵中对应状态动作的Q值
-        q_target[batch_index,action] = reward+self.gamma*np.max(q_next,axis=1)
+        if done is not True:
+            q_target[batch_index,action] = reward+self.gamma*np.max(q_next,axis=1)
+        else:
+            q_target[batch_index, action] = reward
         # 更新评估网络并获取其训练操作
         if self.learn_step_counter % 10 == 0:  # 定期保存cnpk模型
             self.saver.save(self.sess, os.path.join(self.model_save_path, self.model_name),
@@ -112,11 +115,11 @@ class DQN(object):
         self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
         self.learn_step_counter += 1
         return
-    def update(self, s, a, r, s_):
+    def update(self, s, a, r, s_,done):
         self.store_in_memory(s, a, r, s_)
         # 以固定频率进行学习本回合的经验(s, a, r, s)
         if (self.step_counter > 200) and (self.step_counter % 5 == 0):
-            self.learn()
+            self.learn(done)
         elif False and self.step_counter% 10 == 0:  # 指定目录下打印消息
             print("已经收集{}条数据".format(self.memory.pointer))
             self.memory.save_memory_json()  # 保存数据
