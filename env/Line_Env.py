@@ -1,10 +1,10 @@
 '''''''''
-@file: Env.py
+@file: line_env.py
 @author: MRL Liu
 @time: 2021/2/13 19:12
 @env: Python,Numpy
-@desc: MoveOn_Line的环境
-@ref:
+@desc: 一维的方格环境
+@ref: https://morvanzhou.github.io/tutorials/
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''
 import numpy as np

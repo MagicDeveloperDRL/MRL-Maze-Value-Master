@@ -3,7 +3,7 @@
 @author: MRL Liu
 @time: 2021/4/25 14:17
 @env: Python,Numpy
-@desc:
+@desc: Maze项目的启动器，负责切换不同的方格环境
 @ref:
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''
@@ -11,11 +11,9 @@ import time
 from datetime import  timedelta
 
 from env.line_env import Line_Env
-#from env.Maze_Env import Maze_Env
 from env.maze_env import Maze_Env
 from brain.brain import Brain
 from trainer import Trainer
-
 
 
 def run_line():
@@ -48,5 +46,5 @@ def run_maze():
 
 
 if __name__ == '__main__':
-    run_line()
-    #run_maze()
+    #run_line()
+    run_maze()

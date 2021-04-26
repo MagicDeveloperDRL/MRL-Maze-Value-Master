@@ -1,9 +1,9 @@
 '''''''''
-@file: dqn.py
+@file: double_dqn.py
 @author: MRL Liu
-@time: 2021/4/25 16:48
+@time: 2021/4/26 16:43
 @env: Python,Numpy
-@desc: 名为Nature DQN的AI算法
+@desc: 名为double DQN的AI算法
 @ref: https://morvanzhou.github.io/tutorials/
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''
@@ -19,7 +19,7 @@ MODEL_SAVE_PATH='./models/'
 LOGS_SAVE_PATH='./logs/'
 MODEL_NAME='model.ckpt'
 
-class DQN(object):
+class Double_DQN(object):
     # 初始化参数
     def __init__(
             self,
@@ -89,7 +89,12 @@ class DQN(object):
         # 获取批次数据
         batch_memory = self.memory.sample(batch_size=self.batch_size)
         # 获取目标Q值
-        q_next = self.sess.run(self.q_next, feed_dict={self.s_: batch_memory[:, -self.n_features:]})  # next observation
+        q_next, q_eval4next = self.sess.run(
+            fetches=[self.q_next, self.q_eval],
+            feed_dict={
+                self.s_: batch_memory[:, -self.n_features:],  # next observation
+                self.s: batch_memory[:, -self.n_features:]  # next observation
+            })
         # 获取当前Q值
         q_eval = self.sess.run(self.q_eval, {self.s: batch_memory[:, :self.n_features]})
 
@@ -103,7 +108,12 @@ class DQN(object):
 
         # 计算Q现实值，只修改矩阵中对应状态动作的Q值
         if done is not True:
-            q_target[batch_index,action] = reward+self.gamma*np.max(q_next,axis=1)
+            # DDQN的计算方法
+            max_act4next = np.argmax(q_eval4next, axis=1)
+            selected_q_next = q_next[batch_index, max_act4next]
+            # Nature DQN的计算方法
+            # selected_q_next = np.max(q_next,axis=1)
+            q_target[batch_index,action] = reward+self.gamma*selected_q_next
         else:
             q_target[batch_index, action] = reward
         # 更新评估网络并获取其训练操作

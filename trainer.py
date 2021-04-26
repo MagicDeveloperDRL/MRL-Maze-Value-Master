@@ -1,15 +1,12 @@
 '''''''''
-@file: Maze_Trainer.py
+@file: trainer.py
 @author: MRL Liu
 @time: 2021/2/15 15:43
 @env: Python,Numpy
-@desc:Maze项目的训练器
-@ref:
+@desc: Maze项目的训练器，负责切换不同的训练流程
+@ref: 
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''
-import time
-from datetime import timedelta
-
 from matplotlib import pyplot as plt
 plt.rcParams['font.sans-serif']=['SimHei'] #使用中文字符
 plt.rcParams['axes.unicode_minus'] = False #显示负数的负号
@@ -84,35 +81,6 @@ class Trainer(object):
                     break
         print('仿真训练任务结束')
 
-    def train_dqn(self,max_episodes):
-        # 记录开始训练的时刻
-        print('仿真训练任务启动...')
-        # 训练主循环
-        for episode in range(1,max_episodes+1):
-            step_counter = 0
-            reward_episode = 0
-            # 获取初始环境状态
-            observation = self.env.reset()
-            # 开始本回合的仿真
-            while True:
-                self.env.render()
-                # 获取动作和环境反馈
-                action = self.agent.choose_action(observation)# agent根据当前状态采取动作
-                observation_, reward, done = self.env.step(observation,action)# env根据动作做出反馈
-                # 更新学习
-                #reward-=step_counter*0.01
-                self.agent.update(observation, action, reward,observation_,done)
-                # 更新
-                observation = observation_
-                step_counter += 1
-                reward_episode += reward
-                # 检测本回合是否需要停止
-                if done:
-                    self.list_reward_train.append(reward_episode)  # 记录最大回合奖励
-                    self.list_step_train.append(step_counter)  # 记录最大回合数
-                    print('episode：{} ,step：{},reward_episode：{}'.format(episode, step_counter,reward_episode))
-                    break
-        print('仿真训练任务结束')
     def draw_plot(self):
         # 创建画布
         fig = plt.figure(figsize=(6, 3))  # 创建一个指定大小的画布

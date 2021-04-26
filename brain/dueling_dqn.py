@@ -1,10 +1,10 @@
 '''''''''
-@file: Agent.py
+@file: dueling_dqn.py
 @author: MRL Liu
 @time: 2021/4/5 18:57
 @env: Python,Numpy
-@desc: 基于Dueling DQN算法的Agent
-@ref:
+@desc: 名为Dueling DQN的AI算法
+@ref: https://morvanzhou.github.io/tutorials/
 @blog: https://blog.csdn.net/qq_41959920
 '''''''''
 import numpy as np
@@ -24,7 +24,7 @@ class Dueling_DQN(object):
                  n_features,
                  n_actions,
                  learning_rate=0.001,
-                 reward_decay=0.9,
+                 gamma=0.9,
                  e_greedy=0.9,
                  replace_target_iter=200,
                  memory_size=500,# 内存池的容量
@@ -37,20 +37,28 @@ class Dueling_DQN(object):
                  ):
         self.n_actions = n_actions
         self.n_features = n_features
-        self.learn_rate = learning_rate
-        self.gamma = reward_decay
-        self.epsilon_max = e_greedy
-        self.replace_target_iter = replace_target_iter # 定期迭代的次数
-        self.batch_size = batch_size
+        # 贪婪值
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
+        self.epsilon_max = e_greedy
+        # 更新相关参数
+        self.learn_rate = learning_rate
+        self.gamma = gamma
+        self.replace_target_iter = replace_target_iter # 定期迭代的次数
+        self.batch_size = batch_size
+        self.memory_size = memory_size
+        # 保存路径
         self.model_save_path = MODEL_SAVE_PATH
         self.logs_save_path = LOGS_SAVE_PATH
         self.model_name = MODEL_NAME
+        # 相关设置
+        self.output_graph = output_graph
+        self.save_model = save_model
+        self.read_saved_model = read_saved_model
         # 初始化经验池
         self.memory = ReplayBuffer(memory_size,self.n_features)
         # 定义计算图
-        self.define_graph(sess,output_graph,save_model,read_saved_model)
+        self.define_graph(sess)
         # 存储损失
         self.cost_his = []
 
@@ -63,21 +71,16 @@ class Dueling_DQN(object):
             action = np.random.randint(0, self.n_actions)
         return action
 
-
-    # 向记忆池存入数据
-    def store_in_memory(self,s, a, r, s_):
-        self.memory.store_transition(s, a, r, s_)
-
     # 更新数据
-    def update(self, state, action, reward, state_,done):
+    def update(self, state, action, reward, state_, done):
         self.store_in_memory(state, action, reward, state_)  # 存储到经验池
         # 检查是否需要学习
-        if self.memory.pointer > self.batch_size:  # 经验池中数据足够时开始学习
+        if (self.step_counter > self.memory_size) and (self.step_counter % 5 == 0):  # 经验池中数据足够时开始学习
             self.learn(done)
-        elif self.memory.pointer % 10 == 0:  # 指定目录下打印消息
+        elif self.memory.pointer % 20 == 0:  # 指定目录下打印消息
             print("已经收集{}条数据".format(self.memory.pointer))
             self.memory.save_memory_json()  # 保存数据
-
+        self.step_counter += 1
     def learn(self,done):
         if self.learn_step_counter % self.replace_target_iter == 0:
             self.sess.run(self.replace_target_op)
@@ -91,11 +94,8 @@ class Dueling_DQN(object):
         q_eval = self.sess.run(self.q_eval, {self.s: batch_memory[:, :self.n_features]})
 
         q_target = q_eval.copy()
-        #print("q_next.shape:",q_next.shape)
-        #print("q_target.shape:", q_target.shape)
         batch_index = np.arange(self.batch_size, dtype=np.int32)# 生成0-self.batch_size-1的序号数组
         action = batch_memory[:, self.n_features].astype(int) # 获取动作（数字）
-        #print("eval_act_index:", eval_act_index.shape)
         reward = batch_memory[:, self.n_features + 1]
         # 更新每个序号的目标值
         if done is not True:
@@ -103,26 +103,43 @@ class Dueling_DQN(object):
         else:
             q_target[batch_index, action] = reward
         # 更新评估网络并获取其训练操作
-        if self.learn_step_counter % 10 == 0:# 定期保存cnpk模型
-            self.saver.save(self.sess, os.path.join(self.model_save_path, self.model_name),global_step=self.learn_step_counter)
+        if self.save_model and self.learn_step_counter % 100 == 0:  # 定期保存cnpk模型
+            self.saver.save(self.sess, os.path.join(self.model_save_path, self.model_name),
+                            global_step=self.learn_step_counter)
             # 执行优化器、损失值和step
-            _, loss_value = self.sess.run([self._train_op, self.loss],
-                                                feed_dict={self.s: batch_memory[:, :self.n_features],
-                                                           self.s_: batch_memory[:, -self.n_features:],
-                                                           self.q_target: q_target})
-            print('learn_step: %d , loss: %g. and save model successfully' % (self.learn_step_counter, loss_value))
-        else:
-            _, cost,summary = self.sess.run([self._train_op, self.loss,self.merged_summary_op],
-                                         feed_dict={self.s: batch_memory[:, :self.n_features],
-                                                    self.s_: batch_memory[:, -self.n_features:],
-                                                    self.q_target: q_target})
-            self.train_writer.add_summary(summary, self.learn_step_counter)# 添加日志
+            _, cost = self.sess.run([self._train_op, self.loss],
+                                    feed_dict={self.s: batch_memory[:, :self.n_features],
+                                               self.s_: batch_memory[:, -self.n_features:],
+                                               self.q_target: q_target})
+            print('learn_step: %d , loss: %g. and save model successfully' % (self.learn_step_counter, cost))
+            self.cost_his.append(cost)
+        elif self.output_graph and self.learn_step_counter % 10 == 0:
+            _, cost, summary = self.sess.run([self._train_op, self.loss, self.merged_summary_op],
+                                             feed_dict={self.s: batch_memory[:, :self.n_features],
+                                                        self.s_: batch_memory[:, -self.n_features:],
+                                                        self.q_target: q_target})
+            self.train_writer.add_summary(summary, self.learn_step_counter)  # 添加日志
+            print('learn_step: %d , loss: %g. ' % (self.learn_step_counter, cost))
+            self.cost_his.append(cost)
+        elif self.learn_step_counter % 10 == 0:
+            _, cost = self.sess.run([self._train_op, self.loss],
+                                    feed_dict={self.s: batch_memory[:, :self.n_features],
+                                               self.s_: batch_memory[:, -self.n_features:],
+                                               self.q_target: q_target})
+            print('learn_step: %d , loss: %g. ' % (self.learn_step_counter, cost))
             self.cost_his.append(cost)
         # 更新超参数的值
         self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max # 贪婪概率
         self.learn_step_counter += 1
+    # 向记忆池存入数据
+    def store_in_memory(self,s, a, r, s_):
+        self.memory.store_transition(s, a, r, s_)
 
-    def define_graph(self,sess,output_graph,save_model,read_saved_model):
+
+
+
+
+    def define_graph(self,sess):
         # 定义目标网络的输入输出
         self.s_ = tf.placeholder(dtype=tf.float32, shape=[None, self.n_features], name='s_')
         with tf.variable_scope('target_net'):
@@ -143,6 +160,7 @@ class Dueling_DQN(object):
                 self._train_op = tf.train.RMSPropOptimizer(self.learn_rate).minimize(self.loss)
         # 定时复制参数给target_net
         self.learn_step_counter = 0
+        self.step_counter = 0
         t_params = tf.get_collection('target_net_params')
         e_params = tf.get_collection('eval_net_params')
         self.replace_target_op = [tf.assign(t, e) for t, e in zip(t_params, e_params)]
@@ -153,18 +171,22 @@ class Dueling_DQN(object):
         else:
             self.sess = sess
         # 是否保存模型：
-        if save_model:
+        if self.save_model:
             self.saver = tf.train.Saver()  # 网络模型保存器
         else:
             self.saver = None
-        if read_saved_model:
-            ckpt = tf.train.get_checkpoint_state(os.path.join(self.model_save_path,""))  # 获取ckpt的模型文件的路径
+        if self.read_saved_model:
+            ckpt = tf.train.get_checkpoint_state(os.path.join(self.model_save_path, ""))  # 获取ckpt的模型文件的路径
+            print(os.path.join(self.model_save_path, ""))
             if ckpt and ckpt.model_checkpoint_path:
                 self.saver.restore(self.sess, ckpt.model_checkpoint_path)  # 恢复模型参数
+                strNum = ckpt.model_checkpoint_path.split(',')[-1].split('-')[-1]
+                self.learn_step_counter = int(strNum)
+                print('成功读取指定模型：' + ckpt.model_checkpoint_path)
             else:
                 print('无法找到指定的checkpoint文件')
         # 是否输出图
-        if output_graph:
+        if self.output_graph:
             self.train_writer = tf.summary.FileWriter(os.path.join(self.logs_save_path, ""), self.sess.graph)
         else:
             self.train_writer = None

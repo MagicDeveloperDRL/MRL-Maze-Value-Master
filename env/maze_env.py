@@ -1,12 +1,12 @@
-"""
-@file: Maze_Env.py
+'''''''''
+@file: maze_env.py
 @author: MRL Liu
 @time: 2021/2/15 15:42
 @env: Python,Numpy
-@desc:Maze项目的环境
-@ref:
+@desc: 二维的方格环境
+@ref: https://morvanzhou.github.io/tutorials/
 @blog: https://blog.csdn.net/qq_41959920
-"""
+'''''''''
 import numpy as np
 import time
 import sys
@@ -106,16 +106,16 @@ class Maze_Env(tk.Tk,object):
         if s_ == self.canvas.coords(self.oval):
             reward = 1
             done = True
-            s_ = 'terminal'
+            #s_ = 'terminal'
         elif s_ in [self.canvas.coords(self.hell1), self.canvas.coords(self.hell2)]:
             reward = -1
             done = True
-            s_ = 'terminal'
+            #s_ = 'terminal'
         else:
             reward = 0
             done = False
-            s_ = (np.array(s_[:2]) - np.array(self.canvas.coords(self.oval)[:2])) / (MAZE_H * UNIT)
-            #print(s_)
+        s_ = (np.array(s_[:2]) - np.array(self.canvas.coords(self.oval)[:2])) / (MAZE_H * UNIT)
+        #print(s_)
         return s_, reward, done
 
     def render(self):
@@ -129,7 +129,7 @@ def update():
         while True:
             env.render()
             a = 2
-            s, r, done = env.step(a)
+            s, r, done = env.step(s,a)
             if done:
                 break
 
