@@ -1,5 +1,5 @@
 # MRL-Maze-Value-Master
-# AI走方格迷宫
+# 使用多种AI算法玩方格迷宫
 
 ## ——基于Value的RL算法 
 
